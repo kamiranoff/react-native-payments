@@ -42,7 +42,6 @@ RCT_EXPORT_METHOD(createPaymentRequest: (NSDictionary *)methodData
     self.paymentRequest.supportedNetworks = [self getSupportedNetworksFromMethodData:methodData];
     self.paymentRequest.paymentSummaryItems = [self getPaymentSummaryItemsFromDetails:details];
     self.paymentRequest.shippingMethods = [self getShippingMethodsFromDetails:details];
-    self.paymentRequest.billingContact = [self getBillingFromDetails:details];
 
     [self setRequiredShippingAddressFieldsFromOptions:options];
     
@@ -288,22 +287,6 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     }
     
     return shippingMethods;
-}
-
-- (NSArray<PKContact *>  *_Nonnull)getBillingFromDetails:(NSDictionary *_Nonnull)details {
-
-
-    // Setup `billingMethod` array
-    // NSMutableArray <PKShippingMethod *> * billing = [NSMutableArray array];
-    // Add `shippingOptions` to `shippingMethods`
-    NSArray *billingOptions = details[@"billingOptions"];
-    if (billingOptions.count > 0) {
-        //        for (NSDictionary *billingOption in billingOptions) {
-        //            [billing addObject: [self convertBillingOptionToBillingMethod:billing]];
-        //        }
-    }
-
-    return billingOptions;
 }
 
 - (PKPaymentSummaryItem *_Nonnull)convertDisplayItemToPaymentSummaryItem:(NSDictionary *_Nonnull)displayItem;
