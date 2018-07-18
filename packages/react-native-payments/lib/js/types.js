@@ -86,14 +86,28 @@ export type PaymentShippingOption = {
 // https://www.w3.org/TR/payment-request/#paymentcomplete-enum
 export type PaymentComplete = 'fail' | 'success' | 'unknown';
 
+export type BillingAddress = {
+  street: string,
+  subAdministrativeArea: string,
+  sublocality: string,
+  state: string,
+  city: string,
+  region: string,
+  country: string,
+  postalCode: string,
+  ISOCountryCode: string,
+}
+
 export type PaymentDetailsIOS = {
   paymentData: ?Object,
   paymentToken?: string,
   transactionIdentifier: string,
+  billingAddress: BillingAddress,
 };
 
 export type PaymentDetailsIOSRaw = {
   paymentData: string,
   paymentToken?: string,
   transactionIdentifier: string,
+  billingAddress: BillingAddress,
 };

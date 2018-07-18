@@ -42,7 +42,8 @@ RCT_EXPORT_METHOD(createPaymentRequest: (NSDictionary *)methodData
     self.paymentRequest.supportedNetworks = [self getSupportedNetworksFromMethodData:methodData];
     self.paymentRequest.paymentSummaryItems = [self getPaymentSummaryItemsFromDetails:details];
     self.paymentRequest.shippingMethods = [self getShippingMethodsFromDetails:details];
-    
+    self.paymentRequest.billingContact = [self getBillingFromDetails:details];
+
     [self setRequiredShippingAddressFieldsFromOptions:options];
     
     // Set options so that we can later access it.
@@ -289,6 +290,22 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     return shippingMethods;
 }
 
+- (NSArray<PKContact *>  *_Nonnull)getBillingFromDetails:(NSDictionary *_Nonnull)details {
+
+
+    // Setup `billingMethod` array
+    // NSMutableArray <PKShippingMethod *> * billing = [NSMutableArray array];
+    // Add `shippingOptions` to `shippingMethods`
+    NSArray *billingOptions = details[@"billingOptions"];
+    if (billingOptions.count > 0) {
+        //        for (NSDictionary *billingOption in billingOptions) {
+        //            [billing addObject: [self convertBillingOptionToBillingMethod:billing]];
+        //        }
+    }
+
+    return billingOptions;
+}
+
 - (PKPaymentSummaryItem *_Nonnull)convertDisplayItemToPaymentSummaryItem:(NSDictionary *_Nonnull)displayItem;
 {
     NSDecimalNumber *decimalNumberAmount = [NSDecimalNumber decimalNumberWithString:displayItem[@"amount"][@"value"]];
@@ -319,6 +336,10 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
         self.paymentRequest.requiredShippingAddressFields = PKAddressFieldPostalAddress;
     }
     
+    if (options[@"requestBilling"]) {
+        self.paymentRequest.requiredBillingAddressFields = PKAddressFieldPostalAddress;
+    }
+
     if (options[@"requestPayerName"]) {
         self.paymentRequest.requiredShippingAddressFields = self.paymentRequest.requiredShippingAddressFields | PKAddressFieldName;
     }
@@ -332,15 +353,46 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     }
 }
 
+- (NSString *)getPostalAddress:(CNPostalAddress *) postalAddress {
+    NSMutableDictionary * tmp = [NSMutableDictionary dictionary];
+
+    if (postalAddress.street) [tmp setObject:postalAddress.street forKey:@"street"];
+    if (postalAddress.city) [tmp setObject:postalAddress.city forKey:@"city"];
+    if (postalAddress.subLocality) [tmp setObject:postalAddress.subLocality forKey:@"sublocality"];
+    if (postalAddress.subAdministrativeArea) [tmp setObject:postalAddress.subAdministrativeArea forKey:@"subAdministrativeArea"];
+    if (postalAddress.state) [tmp setObject:postalAddress.state forKey:@"state"];
+    if (postalAddress.postalCode) [tmp setObject:postalAddress.postalCode forKey:@"postalCode"];
+    if (postalAddress.country) [tmp setObject:postalAddress.country forKey:@"country"];
+    if (postalAddress.ISOCountryCode) [tmp setObject:postalAddress.ISOCountryCode forKey:@"ISOCountryCode"];
+
+    NSError *error;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:tmp
+                                                       options: 0
+                                                         error:&error];
+
+    if (!jsonData) {
+        NSLog(@"Got an error: %@", error);
+    } else {
+        return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    }
+
+    return nil;
+}
 - (void)handleUserAccept:(PKPayment *_Nonnull)payment
             paymentToken:(NSString *_Nullable)token
 {
     NSString *transactionId = payment.token.transactionIdentifier;
+    NSString *billingAddress = [self getPostalAddress:payment.billingContact.postalAddress];
+
     NSString *paymentData = [[NSString alloc] initWithData:payment.token.paymentData encoding:NSUTF8StringEncoding];
-    NSMutableDictionary *paymentResponse = [[NSMutableDictionary alloc]initWithCapacity:3];
+
+    NSMutableDictionary *paymentResponse = [[NSMutableDictionary alloc]initWithCapacity:4];
     [paymentResponse setObject:transactionId forKey:@"transactionIdentifier"];
     [paymentResponse setObject:paymentData forKey:@"paymentData"];
-    
+    if(billingAddress) {
+        [paymentResponse setObject:billingAddress forKey:@"billingAddress"];
+    }
+
     if (token) {
         [paymentResponse setObject:token forKey:@"paymentToken"];
     }
