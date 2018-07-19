@@ -13,7 +13,7 @@ import type {
   PaymentAddress,
   PaymentShippingType,
   PaymentDetailsIOS,
-  PaymentDetailsIOSRaw
+  PaymentDetailsIOSRaw,
 } from './types';
 import type PaymentResponseType from './PaymentResponse';
 

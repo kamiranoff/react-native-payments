@@ -355,12 +355,13 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 
     if (!jsonData) {
         NSLog(@"Got an error: %@", error);
-    } else {
-        return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+        return nil;
     }
+    
+    return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 
-    return nil;
 }
+
 - (void)handleUserAccept:(PKPayment *_Nonnull)payment
             paymentToken:(NSString *_Nullable)token
 {
