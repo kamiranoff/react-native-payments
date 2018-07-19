@@ -88,11 +88,11 @@ export type PaymentComplete = 'fail' | 'success' | 'unknown';
 
 export type BillingAddress = {
   street: string,
-  subAdministrativeArea: string,
-  sublocality: string,
+  subAdministrativeArea?: string,
+  sublocality?: string,
   state: string,
   city: string,
-  region: string,
+  region?: string,
   country: string,
   postalCode: string,
   ISOCountryCode: string,
