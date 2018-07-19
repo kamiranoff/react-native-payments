@@ -373,7 +373,7 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     NSMutableDictionary *paymentResponse = [[NSMutableDictionary alloc]initWithCapacity:4];
     [paymentResponse setObject:transactionId forKey:@"transactionIdentifier"];
     [paymentResponse setObject:paymentData forKey:@"paymentData"];
-    if(billingAddress) {
+    if(billingContact) {
         [paymentResponse setObject:billingContact forKey:@"billingContact"];
     }
 
