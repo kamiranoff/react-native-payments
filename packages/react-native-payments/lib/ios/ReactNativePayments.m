@@ -366,7 +366,7 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
             paymentToken:(NSString *_Nullable)token
 {
     NSString *transactionId = payment.token.transactionIdentifier;
-    NSString *billingAddress = [self getPostalAddress:payment.billingContact.postalAddress];
+    NSString *billingContact = [self getPostalAddress:payment.billingContact.postalAddress];
 
     NSString *paymentData = [[NSString alloc] initWithData:payment.token.paymentData encoding:NSUTF8StringEncoding];
 
@@ -374,7 +374,7 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     [paymentResponse setObject:transactionId forKey:@"transactionIdentifier"];
     [paymentResponse setObject:paymentData forKey:@"paymentData"];
     if(billingAddress) {
-        [paymentResponse setObject:billingAddress forKey:@"billingAddress"];
+        [paymentResponse setObject:billingContact forKey:@"billingContact"];
     }
 
     if (token) {

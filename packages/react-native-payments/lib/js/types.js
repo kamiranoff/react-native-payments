@@ -86,7 +86,7 @@ export type PaymentShippingOption = {
 // https://www.w3.org/TR/payment-request/#paymentcomplete-enum
 export type PaymentComplete = 'fail' | 'success' | 'unknown';
 
-export type BillingAddress = {
+export type BillingContact = {
   street: string,
   subAdministrativeArea?: string,
   sublocality?: string,
@@ -102,12 +102,12 @@ export type PaymentDetailsIOS = {
   paymentData: ?Object,
   paymentToken?: string,
   transactionIdentifier: string,
-  billingAddress: BillingAddress,
+  billingContact: BillingContact,
 };
 
 export type PaymentDetailsIOSRaw = {
   paymentData: string,
   paymentToken?: string,
   transactionIdentifier: string,
-  billingAddress: BillingAddress,
+  billingContact: BillingContact,
 };

@@ -14,6 +14,7 @@ import type {
   PaymentShippingType,
   PaymentDetailsIOS,
   PaymentDetailsIOSRaw,
+  BillingContact,
 } from './types';
 import type PaymentResponseType from './PaymentResponse';
 
@@ -99,7 +100,6 @@ const IS_IOS = Platform.OS === 'ios';
 export default class PaymentRequest {
   _id: string;
   _shippingAddress: null | PaymentAddress;
-  _billingAddress: null | PaymentAddress;
   _shippingOption: null | string;
   _shippingType: null | PaymentShippingType;
 
@@ -194,9 +194,6 @@ export default class PaymentRequest {
 
     // 19. Set the value of the shippingAddress attribute on request to null.
     this._shippingAddress = null;
-
-    // 20. Set the value of the billingAddress attribute on request to null.
-    this._billingAddress = null;
 
     // 20. If options.requestShipping is set to true, then set the value of the shippingType attribute on request to options.shippingType. Otherwise, set it to null.
     this._shippingType = IS_IOS && options.requestShipping === true
@@ -306,7 +303,7 @@ export default class PaymentRequest {
       paymentData: serializedPaymentData,
       paymentToken,
       transactionIdentifier,
-      billingAddress,
+      billingContact,
     } = details;
 
     const isSimulator = transactionIdentifier === 'Simulated Identifier';
@@ -315,7 +312,7 @@ export default class PaymentRequest {
       paymentToken,
       transactionIdentifier,
       paymentData: isSimulator ? null : JSON.parse(serializedPaymentData),
-      billingAddress: JSON.parse(billingAddress),
+      billingContact: JSON.parse(billingContact),
     };
   }
 
@@ -347,7 +344,7 @@ export default class PaymentRequest {
     transactionIdentifier: string,
     paymentData: string,
     shippingAddress: Object,
-    billingAddress: Object,
+    billingContact: BillingContact,
     payerEmail: string,
     paymentToken?: string,
   }) {
@@ -427,10 +424,6 @@ export default class PaymentRequest {
   // https://www.w3.org/TR/payment-request/#shippingaddress-attribute
   get shippingAddress(): null | PaymentAddress {
     return this._shippingAddress;
-  }
-
-  get billingAddress(): null | PaymentAddress {
-    return this._billingAddress;
   }
 
   // https://www.w3.org/TR/payment-request/#shippingoption-attribute
