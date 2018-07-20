@@ -336,17 +336,46 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     }
 }
 
-- (NSString *)getPostalAddress:(CNPostalAddress *) postalAddress {
-    NSMutableDictionary * tmp = [NSMutableDictionary dictionary];
+- (NSString*) convertPaymentTypeToString:(PKPaymentMethodType) paymentType {
+    NSString *result = nil;
+    
+    // https://developer.apple.com/documentation/apple_pay_on_the_web/applepaypaymentmethodtype
+    switch(paymentType) {
+        case PKPaymentMethodTypeDebit:
+            result = @"debit";
+            break;
+        case PKPaymentMethodTypeCredit:
+            result = @"credit";
+            break;
+        case PKPaymentMethodTypePrepaid:
+            result = @"prepaid";
+            break;
+        case PKPaymentMethodTypeStore:
+            result = @"store";
+            break;
+            
+        default:
+            result = @"unknown";
+    }
+    
+    return result;
+}
 
-    if (postalAddress.street) [tmp setObject:postalAddress.street forKey:@"street"];
+- (NSString *)getBillingContact:(PKContact *) billingContact {
+    NSMutableDictionary * tmp = [NSMutableDictionary dictionary];
+    CNPostalAddress * postalAddress = billingContact.postalAddress;
+    
+    if(billingContact.name.familyName) [tmp setObject:billingContact.name.familyName forKey:@"familyName"];
+    if(billingContact.name.givenName) [tmp setObject:billingContact.name.givenName forKey:@"givenName"];
+    
+    if (postalAddress.street) [tmp setObject:postalAddress.street forKey:@"addressLines"];
     if (postalAddress.city) [tmp setObject:postalAddress.city forKey:@"city"];
     if (postalAddress.subLocality) [tmp setObject:postalAddress.subLocality forKey:@"sublocality"];
     if (postalAddress.subAdministrativeArea) [tmp setObject:postalAddress.subAdministrativeArea forKey:@"subAdministrativeArea"];
     if (postalAddress.state) [tmp setObject:postalAddress.state forKey:@"state"];
     if (postalAddress.postalCode) [tmp setObject:postalAddress.postalCode forKey:@"postalCode"];
     if (postalAddress.country) [tmp setObject:postalAddress.country forKey:@"country"];
-    if (postalAddress.ISOCountryCode) [tmp setObject:postalAddress.ISOCountryCode forKey:@"ISOCountryCode"];
+    if (postalAddress.ISOCountryCode) [tmp setObject:postalAddress.ISOCountryCode forKey:@"countryCode"];
 
     NSError *error;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:tmp
@@ -362,17 +391,40 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 
 }
 
+- (NSString *) getPaymentMethod:(PKPaymentMethod *) paymentMethod {
+    NSMutableDictionary * tmp = [NSMutableDictionary dictionary];
+    
+    
+    NSString * paymentType = [self convertPaymentTypeToString:paymentMethod.type];
+    if (paymentMethod.displayName) [tmp setObject:paymentMethod.displayName forKey:@"displayName"];
+    if (paymentMethod.network) [tmp setObject:paymentMethod.network forKey:@"network"];
+    if (paymentMethod.type) [tmp setObject:paymentType forKey:@"type"];
+    
+    NSError *error;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:tmp
+                                                       options: 0
+                                                         error:&error];
+    
+    if (!jsonData) {
+        NSLog(@"Got an error: %@", error);
+        return nil;
+    }
+    
+    return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+}
+
 - (void)handleUserAccept:(PKPayment *_Nonnull)payment
             paymentToken:(NSString *_Nullable)token
 {
     NSString *transactionId = payment.token.transactionIdentifier;
-    NSString *billingContact = [self getPostalAddress:payment.billingContact.postalAddress];
-
+    NSString *billingContact = [self getBillingContact:payment.billingContact];
+    NSString *paymentMethod = [self getPaymentMethod:payment.token.paymentMethod];
     NSString *paymentData = [[NSString alloc] initWithData:payment.token.paymentData encoding:NSUTF8StringEncoding];
 
-    NSMutableDictionary *paymentResponse = [[NSMutableDictionary alloc]initWithCapacity:4];
+    NSMutableDictionary *paymentResponse = [[NSMutableDictionary alloc]initWithCapacity:5];
     [paymentResponse setObject:transactionId forKey:@"transactionIdentifier"];
     [paymentResponse setObject:paymentData forKey:@"paymentData"];
+    [paymentResponse setObject:paymentMethod forKey:@"paymentMethod"];
     if(billingContact) {
         [paymentResponse setObject:billingContact forKey:@"billingContact"];
     }
