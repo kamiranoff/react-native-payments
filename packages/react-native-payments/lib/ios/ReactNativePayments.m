@@ -365,22 +365,22 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     NSMutableDictionary * tmp = [NSMutableDictionary dictionary];
     CNPostalAddress * postalAddress = billingContact.postalAddress;
     
-    if(billingContact.name.familyName) [tmp setObject:billingContact.name.familyName forKey:@"familyName"];
-    if(billingContact.name.givenName) [tmp setObject:billingContact.name.givenName forKey:@"givenName"];
-    if(billingContact.name.phoneticRepresentation.familyName) [tmp setObject:billingContact.name.familyName forKey:@"phoneticFamilyName"];
-    if(billingContact.name.phoneticRepresentation.givenName) [tmp setObject:billingContact.name.givenName forKey:@"phoneticGivenName"];
+    if(billingContact.name.familyName) tmp[@"familyName"] = billingContact.name.familyName;
+    if(billingContact.name.givenName) tmp[@"givenName"] = billingContact.name.givenName;
+    if(billingContact.name.phoneticRepresentation.familyName) tmp[@"phoneticFamilyName"] = billingContact.name.familyName;
+    if(billingContact.name.phoneticRepresentation.givenName) tmp[@"phoneticGivenName"] = billingContact.name.givenName;
     
     if (postalAddress.street) {
         NSArray *streetArray = [postalAddress.street componentsSeparatedByString:@"\n"];
-        [tmp setObject:streetArray forKey:@"addressLines"];
+        tmp[@"addressLines"] = streetArray;
     }
-    if (postalAddress.city) [tmp setObject:postalAddress.city forKey:@"city"];
-    if (postalAddress.subLocality) [tmp setObject:postalAddress.subLocality forKey:@"sublocality"];
-    if (postalAddress.subAdministrativeArea) [tmp setObject:postalAddress.subAdministrativeArea forKey:@"subAdministrativeArea"];
-    if (postalAddress.state) [tmp setObject:postalAddress.state forKey:@"state"];
-    if (postalAddress.postalCode) [tmp setObject:postalAddress.postalCode forKey:@"postalCode"];
-    if (postalAddress.country) [tmp setObject:postalAddress.country forKey:@"country"];
-    if (postalAddress.ISOCountryCode) [tmp setObject:postalAddress.ISOCountryCode forKey:@"countryCode"];
+    if (postalAddress.city) tmp[@"city"] = postalAddress.city;
+    if (postalAddress.subLocality) tmp[@"sublocality"] = postalAddress.subLocality;
+    if (postalAddress.subAdministrativeArea) tmp[@"subAdministrativeArea"] = postalAddress.subAdministrativeArea;
+    if (postalAddress.state) tmp[@"state"] = postalAddress.state;
+    if (postalAddress.postalCode) tmp[@"postalCode"] = postalAddress.postalCode;
+    if (postalAddress.country) tmp[@"country"] = postalAddress.country;
+    if (postalAddress.ISOCountryCode) tmp[@"countryCode"] = postalAddress.ISOCountryCode;
     
     NSError *error;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:tmp
@@ -401,9 +401,9 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     
     
     NSString * paymentType = [self convertPaymentTypeToString:paymentMethod.type];
-    if (paymentMethod.displayName) [tmp setObject:paymentMethod.displayName forKey:@"displayName"];
-    if (paymentMethod.network) [tmp setObject:paymentMethod.network forKey:@"network"];
-    if (paymentMethod.type) [tmp setObject:paymentType forKey:@"type"];
+    if (paymentMethod.displayName) tmp[@"displayName"] = paymentMethod.displayName;
+    if (paymentMethod.network) tmp[@"network"] = paymentMethod.network;
+    if (paymentMethod.type) tmp[@"type"] = paymentType;
     
     NSError *error;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:tmp
@@ -427,16 +427,17 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     NSString *paymentData = [[NSString alloc] initWithData:payment.token.paymentData encoding:NSUTF8StringEncoding];
     
     NSMutableDictionary *paymentResponse = [[NSMutableDictionary alloc]initWithCapacity:5];
-    [paymentResponse setObject:transactionId forKey:@"transactionIdentifier"];
-    [paymentResponse setObject:paymentData forKey:@"paymentData"];
-    [paymentResponse setObject:paymentMethod forKey:@"paymentMethod"];
+    paymentResponse[@"transactionIdentifier"] = transactionId;
+    paymentResponse[@"paymentData"] = paymentData;
+    paymentResponse[@"paymentMethod"] = paymentMethod;
     if(billingContact) {
-        [paymentResponse setObject:billingContact forKey:@"billingContact"];
+        paymentResponse[@"billingContact"] = billingContact;
     }
     
     if (token) {
-        [paymentResponse setObject:token forKey:@"paymentToken"];
+        paymentResponse[@"paymentToken"] = token;
     }
+
     [self.bridge.eventDispatcher sendDeviceEventWithName:@"NativePayments:onuseraccept"
                                                     body:paymentResponse
      ];

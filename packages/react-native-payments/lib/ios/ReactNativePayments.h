@@ -31,5 +31,4 @@
 - (void)handleUserAccept:(PKPayment *_Nonnull)payment
             paymentToken:(NSString *_Nullable)token;
 - (void)handleGatewayError:(NSError *_Nonnull)error;
-
 @end
