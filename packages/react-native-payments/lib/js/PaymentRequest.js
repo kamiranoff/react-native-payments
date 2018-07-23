@@ -16,6 +16,7 @@ import type {
   PaymentDetailsIOSRaw,
   BillingContact,
 } from './types';
+
 import type PaymentResponseType from './PaymentResponse';
 
 // Modules
@@ -304,6 +305,7 @@ export default class PaymentRequest {
       paymentToken,
       transactionIdentifier,
       billingContact,
+      paymentMethod,
     } = details;
 
     const isSimulator = transactionIdentifier === 'Simulated Identifier';
@@ -311,6 +313,7 @@ export default class PaymentRequest {
     return {
       paymentToken,
       transactionIdentifier,
+      paymentMethod: JSON.parse(paymentMethod),
       paymentData: isSimulator ? null : JSON.parse(serializedPaymentData),
       billingContact: JSON.parse(billingContact),
     };
@@ -321,6 +324,7 @@ export default class PaymentRequest {
     payerEmail: string,
     paymentDescription: string,
     shippingAddress: Object,
+    paymentMethod: Object,
   }) {
     const {
       googleTransactionId,
