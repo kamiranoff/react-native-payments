@@ -42,7 +42,7 @@ RCT_EXPORT_METHOD(createPaymentRequest: (NSDictionary *)methodData
     self.paymentRequest.supportedNetworks = [self getSupportedNetworksFromMethodData:methodData];
     self.paymentRequest.paymentSummaryItems = [self getPaymentSummaryItemsFromDetails:details];
     self.paymentRequest.shippingMethods = [self getShippingMethodsFromDetails:details];
-
+    
     [self setRequiredShippingAddressFieldsFromOptions:options];
     
     // Set options so that we can later access it.
@@ -322,7 +322,7 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     if (options[@"requestBilling"]) {
         self.paymentRequest.requiredBillingAddressFields = PKAddressFieldPostalAddress;
     }
-
+    
     if (options[@"requestPayerName"]) {
         self.paymentRequest.requiredShippingAddressFields = self.paymentRequest.requiredShippingAddressFields | PKAddressFieldName;
     }
@@ -367,8 +367,13 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     
     if(billingContact.name.familyName) [tmp setObject:billingContact.name.familyName forKey:@"familyName"];
     if(billingContact.name.givenName) [tmp setObject:billingContact.name.givenName forKey:@"givenName"];
+    if(billingContact.name.phoneticRepresentation.familyName) [tmp setObject:billingContact.name.familyName forKey:@"phoneticFamilyName"];
+    if(billingContact.name.phoneticRepresentation.givenName) [tmp setObject:billingContact.name.givenName forKey:@"phoneticGivenName"];
     
-    if (postalAddress.street) [tmp setObject:postalAddress.street forKey:@"addressLines"];
+    if (postalAddress.street) {
+        NSArray *streetArray = [postalAddress.street componentsSeparatedByString:@"\n"];
+        [tmp setObject:streetArray forKey:@"addressLines"];
+    }
     if (postalAddress.city) [tmp setObject:postalAddress.city forKey:@"city"];
     if (postalAddress.subLocality) [tmp setObject:postalAddress.subLocality forKey:@"sublocality"];
     if (postalAddress.subAdministrativeArea) [tmp setObject:postalAddress.subAdministrativeArea forKey:@"subAdministrativeArea"];
@@ -376,19 +381,19 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     if (postalAddress.postalCode) [tmp setObject:postalAddress.postalCode forKey:@"postalCode"];
     if (postalAddress.country) [tmp setObject:postalAddress.country forKey:@"country"];
     if (postalAddress.ISOCountryCode) [tmp setObject:postalAddress.ISOCountryCode forKey:@"countryCode"];
-
+    
     NSError *error;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:tmp
                                                        options: 0
                                                          error:&error];
-
+    
     if (!jsonData) {
         NSLog(@"Got an error: %@", error);
         return nil;
     }
     
     return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-
+    
 }
 
 - (NSString *) getPaymentMethod:(PKPaymentMethod *) paymentMethod {
@@ -420,7 +425,7 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     NSString *billingContact = [self getBillingContact:payment.billingContact];
     NSString *paymentMethod = [self getPaymentMethod:payment.token.paymentMethod];
     NSString *paymentData = [[NSString alloc] initWithData:payment.token.paymentData encoding:NSUTF8StringEncoding];
-
+    
     NSMutableDictionary *paymentResponse = [[NSMutableDictionary alloc]initWithCapacity:5];
     [paymentResponse setObject:transactionId forKey:@"transactionIdentifier"];
     [paymentResponse setObject:paymentData forKey:@"paymentData"];
@@ -428,11 +433,10 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     if(billingContact) {
         [paymentResponse setObject:billingContact forKey:@"billingContact"];
     }
-
+    
     if (token) {
         [paymentResponse setObject:token forKey:@"paymentToken"];
     }
-    
     [self.bridge.eventDispatcher sendDeviceEventWithName:@"NativePayments:onuseraccept"
                                                     body:paymentResponse
      ];
