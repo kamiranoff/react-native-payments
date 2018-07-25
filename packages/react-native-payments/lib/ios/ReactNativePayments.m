@@ -426,7 +426,7 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     NSString *paymentMethod = [self getPaymentMethod:payment.token.paymentMethod];
     NSString *paymentData = [[NSString alloc] initWithData:payment.token.paymentData encoding:NSUTF8StringEncoding];
     
-    NSMutableDictionary *paymentResponse = [[NSMutableDictionary alloc]initWithCapacity:5];
+    NSMutableDictionary *paymentResponse = [[NSMutableDictionary alloc]initWithCapacity:4];
     paymentResponse[@"transactionIdentifier"] = transactionId;
     paymentResponse[@"paymentData"] = paymentData;
     paymentResponse[@"paymentMethod"] = paymentMethod;
@@ -434,10 +434,6 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
         paymentResponse[@"billingContact"] = billingContact;
     }
     
-    if (token) {
-        paymentResponse[@"paymentToken"] = token;
-    }
-
     [self.bridge.eventDispatcher sendDeviceEventWithName:@"NativePayments:onuseraccept"
                                                     body:paymentResponse
      ];
