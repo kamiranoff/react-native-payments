@@ -4,7 +4,9 @@
 import type {
   PaymentComplete,
   PaymentDetailsInit,
-  PaymentAddress
+  PaymentAddress,
+  BillingContact,
+  PaymentDetailsIOS,
 } from './types';
 
 // Modules
@@ -21,8 +23,8 @@ export default class PaymentResponse {
   _payerPhone: null | string;
   _payerEmail: null | string;
   _completeCalled: boolean;
-  _billingContact: any;
-  _token: any;
+  _billingContact: BillingContact;
+  _token: PaymentDetailsIOS;
 
   constructor(paymentResponse: Object) {
     // Set properties as readOnly

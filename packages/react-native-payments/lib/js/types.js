@@ -87,27 +87,30 @@ export type PaymentShippingOption = {
 export type PaymentComplete = 'fail' | 'success' | 'unknown';
 
 export type BillingContact = {
-  street: string,
-  subAdministrativeArea?: string,
-  sublocality?: string,
+  familyName: string,
+  givenName: string,
+  phoneticFamilyName: string,
+  phoneticGivenName: string,
+  addressLines: string[],
   state: string,
-  city: string,
+  locality: string,
+  subAdministrativeArea?: string,
+  administrativeArea?: string,
+  sublocality?: string,
   region?: string,
   country: string,
   postalCode: string,
-  ISOCountryCode: string,
+  countryCode: string,
 }
 
 export type PaymentDetailsIOS = {
   paymentData: ?Object,
-  paymentToken?: string,
   transactionIdentifier: string,
   billingContact: BillingContact,
 };
 
 export type PaymentDetailsIOSRaw = {
   paymentData: string,
-  paymentToken?: string,
   transactionIdentifier: string,
   billingContact: BillingContact,
 };
