@@ -5,11 +5,7 @@
 import type {
   PaymentMethodData,
   PaymentDetailsInit,
-  PaymentDetailsBase,
-  PaymentDetailsUpdate,
   PaymentOptions,
-  PaymentShippingOption,
-  PaymentItem,
   PaymentAddress,
   PaymentShippingType,
   PaymentDetailsIOS,
@@ -29,8 +25,6 @@ import PaymentRequestUpdateEvent from './PaymentRequestUpdateEvent';
 
 // Helpers
 import {
-  isValidDecimalMonetaryValue,
-  isNegative,
   convertDetailAmountsToString,
   getPlatformMethodData,
   validateTotal,
@@ -47,7 +41,6 @@ import { ConstructorError, GatewayError } from './errors';
 
 // Constants
 import {
-  MODULE_SCOPING,
   SHIPPING_ADDRESS_CHANGE_EVENT,
   SHIPPING_OPTION_CHANGE_EVENT,
   INTERNAL_SHIPPING_ADDRESS_CHANGE_EVENT,
@@ -55,48 +48,12 @@ import {
   USER_DISMISS_EVENT,
   USER_ACCEPT_EVENT,
   GATEWAY_ERROR_EVENT,
-  SUPPORTED_METHOD_NAME
 } from './constants';
 
 const noop = () => {
 };
 const IS_ANDROID = Platform.OS === 'android';
 const IS_IOS = Platform.OS === 'ios';
-
-// function processPaymentDetailsModifiers(details, serializedModifierData) {
-//     let modifiers = [];
-
-//     if (details.modifiers) {
-//       modifiers = details.modifiers;
-
-//       modifiers.forEach((modifier) => {
-//         if (modifier.total && modifier.total.amount && modifier.total.amount.value) {
-//           // TODO: refactor validateTotal so that we can display proper error messages (should remove construct 'PaymentRequest')
-//           validateTotal(modifier.total);
-//         }
-
-//         if (modifier.additionalDisplayItems) {
-//           modifier.additionalDisplayItems.forEach((displayItem) => {
-//             let value = displayItem && displayItem.amount.value && displayItem.amount.value;
-
-//             isValidDecimalMonetaryValue(value);
-//           });
-//         }
-
-//         let serializedData = modifier.data
-//           ? JSON.stringify(modifier.data)
-//           : null;
-
-//         serializedModifierData.push(serializedData);
-
-//         if (modifier.data) {
-//           delete modifier.data;
-//         }
-//       });
-//     }
-
-//     details.modifiers = modifiers;
-// }
 
 export default class PaymentRequest {
   _id: string;
@@ -302,7 +259,6 @@ export default class PaymentRequest {
   _getPlatformDetailsIOS(details: PaymentDetailsIOSRaw): PaymentDetailsIOS {
     const {
       paymentData: serializedPaymentData,
-      paymentToken,
       transactionIdentifier,
       billingContact,
       paymentMethod,
@@ -312,7 +268,6 @@ export default class PaymentRequest {
 
     return {
       token: {
-        paymentToken,
         paymentMethod: JSON.parse(paymentMethod),
         paymentData: isSimulator ? null : JSON.parse(serializedPaymentData),
         transactionIdentifier,

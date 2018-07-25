@@ -374,10 +374,10 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
         NSArray *streetArray = [postalAddress.street componentsSeparatedByString:@"\n"];
         tmp[@"addressLines"] = streetArray;
     }
-    if (postalAddress.city) tmp[@"city"] = postalAddress.city;
+    if (postalAddress.city) tmp[@"locality"] = postalAddress.city;
     if (postalAddress.subLocality) tmp[@"sublocality"] = postalAddress.subLocality;
     if (postalAddress.subAdministrativeArea) tmp[@"subAdministrativeArea"] = postalAddress.subAdministrativeArea;
-    if (postalAddress.state) tmp[@"state"] = postalAddress.state;
+    if (postalAddress.state) tmp[@"administrativeArea"] = postalAddress.state;
     if (postalAddress.postalCode) tmp[@"postalCode"] = postalAddress.postalCode;
     if (postalAddress.country) tmp[@"country"] = postalAddress.country;
     if (postalAddress.ISOCountryCode) tmp[@"countryCode"] = postalAddress.ISOCountryCode;
