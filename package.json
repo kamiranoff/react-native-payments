@@ -3,7 +3,6 @@
     "precommit": "lint-staged"
   },
   "devDependencies": {
-    "flow-bin": "0.77.0",
     "lerna": "2.0.0",
     "lint-staged": "4.0.0",
     "prettier": "1.13.7"
