@@ -21,6 +21,8 @@ export default class PaymentResponse {
   _payerPhone: null | string;
   _payerEmail: null | string;
   _completeCalled: boolean;
+  _billingContact: any;
+  _token: any;
 
   constructor(paymentResponse: Object) {
     // Set properties as readOnly
@@ -32,6 +34,8 @@ export default class PaymentResponse {
     this._payerName = paymentResponse.payerName;
     this._payerPhone = paymentResponse.payerPhone;
     this._payerEmail = paymentResponse.payerEmail;
+    this._billingContact = paymentResponse.billingContact;
+    this._token = paymentResponse.token;
 
     // Internal Slots
     this._completeCalled = false;
@@ -48,8 +52,13 @@ export default class PaymentResponse {
   }
 
   // https://www.w3.org/TR/payment-request/#details-attribute
-  get details(): PaymentDetailsInit {
-    return this._details;
+  get billingContact(): any {
+    return this._billingContact;
+  }
+
+  // https://www.w3.org/TR/payment-request/#details-attribute
+  get token(): any {
+    return this._token;
   }
 
   // https://www.w3.org/TR/payment-request/#shippingaddress-attribute-1
