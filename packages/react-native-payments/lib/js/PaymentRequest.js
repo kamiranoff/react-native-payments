@@ -311,10 +311,12 @@ export default class PaymentRequest {
     const isSimulator = transactionIdentifier === 'Simulated Identifier';
 
     return {
-      paymentToken,
-      transactionIdentifier,
-      paymentMethod: JSON.parse(paymentMethod),
-      paymentData: isSimulator ? null : JSON.parse(serializedPaymentData),
+      token: {
+        paymentToken,
+        paymentMethod: JSON.parse(paymentMethod),
+        paymentData: isSimulator ? null : JSON.parse(serializedPaymentData),
+        transactionIdentifier,
+      },
       billingContact: JSON.parse(billingContact),
     };
   }
@@ -365,13 +367,13 @@ export default class PaymentRequest {
       requestId: this.id,
       methodName: IS_IOS ? 'apple-pay' : 'android-pay',
       shippingAddress: this._options.requestShipping ? this._shippingAddress : null,
-      details: this._getPlatformDetails(details),
       shippingOption: IS_IOS ? this._shippingOption : null,
       payerName: this._options.requestPayerName ? this._shippingAddress.recipient : null,
       payerPhone: this._options.requestPayerPhone ? this._shippingAddress.phone : null,
       payerEmail: IS_ANDROID && this._options.requestPayerEmail
         ? details.payerEmail
-        : null
+        : null,
+      ...this._getPlatformDetails(details),
     });
 
     return this._acceptPromiseResolver(paymentResponse);
