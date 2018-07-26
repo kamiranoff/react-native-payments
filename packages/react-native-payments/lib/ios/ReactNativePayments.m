@@ -101,9 +101,9 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
         return;
     }
     
-    NSArray<PKShippingMethod *> * shippingMethods = [self getShippingMethodsFromDetails:details];
+    NSArray<PKShippingMethod *> *shippingMethods = [self getShippingMethodsFromDetails:details];
     
-    NSArray<PKPaymentSummaryItem *> * paymentSummaryItems = [self getPaymentSummaryItemsFromDetails:details];
+    NSArray<PKPaymentSummaryItem *> *paymentSummaryItems = [self getPaymentSummaryItemsFromDetails:details];
     
     
     if (self.shippingMethodCompletion) {
@@ -256,7 +256,7 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 - (NSArray<PKPaymentSummaryItem *> *_Nonnull)getPaymentSummaryItemsFromDetails:(NSDictionary *_Nonnull)details
 {
     // Setup `paymentSummaryItems` array
-    NSMutableArray <PKPaymentSummaryItem *> * paymentSummaryItems = [NSMutableArray array];
+    NSMutableArray <PKPaymentSummaryItem *> *paymentSummaryItems = [NSMutableArray array];
     
     // Add `displayItems` to `paymentSummaryItems`
     NSArray *displayItems = details[@"displayItems"];
@@ -276,7 +276,7 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 - (NSArray<PKShippingMethod *> *_Nonnull)getShippingMethodsFromDetails:(NSDictionary *_Nonnull)details
 {
     // Setup `shippingMethods` array
-    NSMutableArray <PKShippingMethod *> * shippingMethods = [NSMutableArray array];
+    NSMutableArray <PKShippingMethod *> *shippingMethods = [NSMutableArray array];
     
     // Add `shippingOptions` to `shippingMethods`
     NSArray *shippingOptions = details[@"shippingOptions"];
@@ -362,8 +362,8 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 }
 
 - (NSString *)getBillingContact:(PKContact *) billingContact {
-    NSMutableDictionary * tmp = [NSMutableDictionary dictionary];
-    CNPostalAddress * postalAddress = billingContact.postalAddress;
+    NSMutableDictionary *tmp = [NSMutableDictionary dictionary];
+    CNPostalAddress *postalAddress = billingContact.postalAddress;
     
     if(billingContact.name.familyName) tmp[@"familyName"] = billingContact.name.familyName;
     if(billingContact.name.givenName) tmp[@"givenName"] = billingContact.name.givenName;
@@ -397,10 +397,9 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 }
 
 - (NSString *) getPaymentMethod:(PKPaymentMethod *) paymentMethod {
-    NSMutableDictionary * tmp = [NSMutableDictionary dictionary];
+    NSMutableDictionary *tmp = [NSMutableDictionary dictionary];
+    NSString *paymentType = [self convertPaymentTypeToString:paymentMethod.type];
     
-    
-    NSString * paymentType = [self convertPaymentTypeToString:paymentMethod.type];
     if (paymentMethod.displayName) tmp[@"displayName"] = paymentMethod.displayName;
     if (paymentMethod.network) tmp[@"network"] = paymentMethod.network;
     if (paymentMethod.type) tmp[@"type"] = paymentType;
