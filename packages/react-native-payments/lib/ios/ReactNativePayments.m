@@ -417,10 +417,92 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 
-- (void)handleUserAccept:(PKPayment *_Nonnull)payment
-            paymentToken:(NSString *_Nullable)token
+-(BOOL)isValidName:(NSString *) name {
+    NSString *nameRegex = @"^[ ',-.0-9A-Za-zÀ-ÿ]*$";
+    NSPredicate *nameValidate = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", nameRegex];
+    
+    return [nameValidate evaluateWithObject:name];
+}
+
+
+-(BOOL)isValidPostCode:(NSString *) postCode {
+    
+    if (!postCode || ![self isValidName:postCode] || postCode.length > 10) {
+        return NO;
+    }
+    return YES;
+    
+}
+
+-(BOOL)isValidStreet:(NSString *) street {
+    
+    NSArray* addressLines = [street componentsSeparatedByString: @"\n"];
+    NSString* line1 = [addressLines objectAtIndex: 0];
+    NSString* line2 = nil;
+    if([addressLines count] >= 2) {
+        line2 = [addressLines objectAtIndex: 1];
+    }
+    
+    if(!line1 || line1.length > 35 || ![self isValidName:line1]) {
+        return NO;
+    }
+    
+    if(line2 && (![self isValidName:line2] || line2.length > 35)) {
+        return NO;
+    }
+    
+    return YES;
+}
+
+-(BOOL)isValidCityName:(NSString *) city {
+    
+    if(!city || ![self isValidName:city] || city.length > 20) {
+        return NO;
+    }
+    
+    return YES;
+}
+
+-(BOOL)isValidStateName:(NSString *) state {
+    
+    if(![self isValidName:state] || state.length > 35) {
+        return NO;
+    }
+    
+    return YES;
+}
+
+
+-(BOOL)isValidBillingContact:(CNPostalAddress *) address {
+    
+    if(![self isValidPostCode:address.postalCode]) {
+        return NO;
+    }
+    
+    if(![self isValidStreet:address.street]) {
+        return NO;
+    }
+    
+    if(![self isValidCityName:address.city]) {
+        return NO;
+    }
+    
+    if(![self isValidStateName:address.state]) {
+        return NO;
+    }
+    
+    return YES;
+}
+
+-(void)handleUserAccept:(PKPayment *_Nonnull)payment
+           paymentToken:(NSString *_Nullable)token
 {
     NSString *transactionId = payment.token.transactionIdentifier;
+    
+    if(![self isValidBillingContact:payment.billingContact.postalAddress]) {
+        return self.completion(PKPaymentAuthorizationStatusInvalidBillingPostalAddress);
+    }
+    
     NSString *billingContact = [self getBillingContact:payment.billingContact];
     NSString *paymentMethod = [self getPaymentMethod:payment.token.paymentMethod];
     NSString *paymentData = [[NSString alloc] initWithData:payment.token.paymentData encoding:NSUTF8StringEncoding];
