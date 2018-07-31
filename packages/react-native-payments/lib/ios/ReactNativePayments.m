@@ -43,7 +43,7 @@ RCT_EXPORT_METHOD(createPaymentRequest: (NSDictionary *)methodData
     self.paymentRequest.paymentSummaryItems = [self getPaymentSummaryItemsFromDetails:details];
     self.paymentRequest.shippingMethods = [self getShippingMethodsFromDetails:details];
     
-    [self setRequiredShippingAddressFieldsFromOptions:options];
+    [self setRequiredAddressFieldsFromOptions:options];
     
     // Set options so that we can later access it.
     self.initialOptions = options;
@@ -312,7 +312,7 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     return shippingMethod;
 }
 
-- (void)setRequiredShippingAddressFieldsFromOptions:(NSDictionary *_Nonnull)options
+- (void)setRequiredAddressFieldsFromOptions:(NSDictionary *_Nonnull)options
 {
     // Request Shipping
     if (options[@"requestShipping"]) {
@@ -320,7 +320,12 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     }
     
     if (options[@"requestBilling"]) {
-        self.paymentRequest.requiredBillingAddressFields = PKAddressFieldPostalAddress;
+        if (@available(iOS 11.0, *)) {
+            self.paymentRequest.requiredBillingContactFields = [NSSet setWithObject:PKContactFieldPostalAddress];
+        } else {
+            self.paymentRequest.requiredBillingAddressFields = PKAddressFieldPostalAddress;
+        }
+        
     }
     
     if (options[@"requestPayerName"]) {
