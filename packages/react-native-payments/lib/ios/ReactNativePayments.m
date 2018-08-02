@@ -71,15 +71,24 @@ RCT_EXPORT_METHOD(abort: (RCTResponseSenderBlock)callback)
     callback(@[[NSNull null]]);
 }
 
-RCT_EXPORT_METHOD(complete: (NSString *)paymentStatus
+RCT_EXPORT_METHOD(complete: (NSDictionary *)paymentObject
                   callback: (RCTResponseSenderBlock)callback)
 {
+    NSString * paymentStatus = [paymentObject valueForKey:@"status"];
+    
     if ([paymentStatus isEqualToString: @"success"]) {
         self.completion(PKPaymentAuthorizationStatusSuccess);
     } else {
-        self.completion(PKPaymentAuthorizationStatusFailure);
+        NSArray * errors = [paymentObject objectForKey:@"errors"];
+        for (id error in errors) {
+            if([[error valueForKey:@"error"]  isEqual: @"billingContactInvalid"]) {
+                self.completion(PKPaymentAuthorizationStatusInvalidBillingPostalAddress);
+            } else {
+                self.completion(PKPaymentAuthorizationStatusFailure);
+            }
+        }
+        
     }
-    
     callback(@[[NSNull null]]);
 }
 
@@ -504,9 +513,9 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 {
     NSString *transactionId = payment.token.transactionIdentifier;
     
-    if(![self isValidBillingContact:payment.billingContact.postalAddress]) {
-        return self.completion(PKPaymentAuthorizationStatusInvalidBillingPostalAddress);
-    }
+//    if(![self isValidBillingContact:payment.billingContact.postalAddress]) {
+//        return self.completion(PKPaymentAuthorizationStatusInvalidBillingPostalAddress);
+//    }
     
     NSString *billingContact = [self getBillingContact:payment.billingContact];
     NSString *paymentMethod = [self getPaymentMethod:payment.token.paymentMethod];

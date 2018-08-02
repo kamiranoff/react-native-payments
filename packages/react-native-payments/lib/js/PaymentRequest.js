@@ -10,7 +10,7 @@ import type {
   PaymentShippingType,
   PaymentDetailsIOS,
   PaymentDetailsIOSRaw,
-  BillingContact,
+  BillingContact
 } from './types';
 
 import type PaymentResponseType from './PaymentResponse';
@@ -47,7 +47,7 @@ import {
   INTERNAL_SHIPPING_OPTION_CHANGE_EVENT,
   USER_DISMISS_EVENT,
   USER_ACCEPT_EVENT,
-  GATEWAY_ERROR_EVENT,
+  GATEWAY_ERROR_EVENT
 } from './constants';
 
 const noop = () => {
@@ -192,10 +192,10 @@ export default class PaymentRequest {
       USER_DISMISS_EVENT,
       this._closePaymentRequest.bind(this)
     );
-    this._userAcceptSubscription = DeviceEventEmitter.addListener(
-      USER_ACCEPT_EVENT,
-      this._handleUserAccept.bind(this)
-    );
+    // this._userAcceptSubscription = DeviceEventEmitter.addListener(
+    //   USER_ACCEPT_EVENT,
+    //   this._handleUserAccept.bind(this)
+    // );
 
     if (IS_IOS) {
       this._gatewayErrorSubscription = DeviceEventEmitter.addListener(
@@ -250,7 +250,7 @@ export default class PaymentRequest {
     this._shippingOptionChangeFn(event);
   }
 
-  _getPlatformDetails(details: *) {
+  getPlatformDetails(details: *) {
     return IS_IOS
       ? this._getPlatformDetailsIOS(details)
       : this._getPlatformDetailsAndroid(details);
@@ -328,7 +328,7 @@ export default class PaymentRequest {
       payerEmail: IS_ANDROID && this._options.requestPayerEmail
         ? details.payerEmail
         : null,
-      ...this._getPlatformDetails(details),
+      ...this.getPlatformDetails(details),
     });
 
     return this._acceptPromiseResolver(paymentResponse);
@@ -350,7 +350,7 @@ export default class PaymentRequest {
   _removeEventListeners() {
     // Internal Events
     DeviceEventEmitter.removeSubscription(this._userDismissSubscription);
-    DeviceEventEmitter.removeSubscription(this._userAcceptSubscription);
+   // DeviceEventEmitter.removeSubscription(this._userAcceptSubscription);
 
     if (IS_IOS) {
       DeviceEventEmitter.removeSubscription(
