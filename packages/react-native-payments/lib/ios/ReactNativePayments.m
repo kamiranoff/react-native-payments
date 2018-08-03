@@ -81,7 +81,7 @@ RCT_EXPORT_METHOD(complete: (NSDictionary *)paymentObject
     } else {
         NSArray * errors = [paymentObject objectForKey:@"errors"];
         for (id error in errors) {
-            if([[error valueForKey:@"error"]  isEqual: @"billingContactInvalid"]) {
+            if ([[error valueForKey:@"error"] isEqual: @"billingContactInvalid"]) {
                 self.completion(PKPaymentAuthorizationStatusInvalidBillingPostalAddress);
             } else {
                 self.completion(PKPaymentAuthorizationStatusFailure);
