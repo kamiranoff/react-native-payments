@@ -376,13 +376,16 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 }
 
 - (NSString *)getBillingContact:(PKContact *) billingContact {
+    
+    // Using BPA required format : https://github.com/EurostarDigital/eurostar_bpa/blob/d76753ce31a95b684cc43cdbbfe0001539054c57/app/shared/actions/helpers.js#L3062
+    
     NSMutableDictionary *tmp = [NSMutableDictionary dictionary];
     CNPostalAddress *postalAddress = billingContact.postalAddress;
     
-    if(billingContact.name.familyName) tmp[@"familyName"] = billingContact.name.familyName;
-    if(billingContact.name.givenName) tmp[@"givenName"] = billingContact.name.givenName;
-    if(billingContact.name.phoneticRepresentation.familyName) tmp[@"phoneticFamilyName"] = billingContact.name.familyName;
-    if(billingContact.name.phoneticRepresentation.givenName) tmp[@"phoneticGivenName"] = billingContact.name.givenName;
+    if (billingContact.name.familyName) tmp[@"familyName"] = billingContact.name.familyName;
+    if (billingContact.name.givenName) tmp[@"givenName"] = billingContact.name.givenName;
+    if (billingContact.name.phoneticRepresentation.familyName) tmp[@"phoneticFamilyName"] = billingContact.name.familyName;
+    if (billingContact.name.phoneticRepresentation.givenName) tmp[@"phoneticGivenName"] = billingContact.name.givenName;
     
     if (postalAddress.street) {
         NSArray *streetArray = [postalAddress.street componentsSeparatedByString:@"\n"];
@@ -431,17 +434,17 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 
--(BOOL)isValidName:(NSString *) name {
+-(BOOL)isValidString:(NSString *) string {
     NSString *nameRegex = @"^[ ',-.0-9A-Za-zÀ-ÿ]*$";
     NSPredicate *nameValidate = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", nameRegex];
     
-    return [nameValidate evaluateWithObject:name];
+    return [nameValidate evaluateWithObject:string];
 }
 
 
 -(BOOL)isValidPostCode:(NSString *) postCode {
     
-    if (!postCode || ![self isValidName:postCode] || postCode.length > 10) {
+    if (!postCode || ![self isValidString:postCode] || postCode.length > 10) {
         return NO;
     }
     return YES;
@@ -457,11 +460,11 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
         line2 = [addressLines objectAtIndex: 1];
     }
     
-    if(!line1 || line1.length > 35 || ![self isValidName:line1]) {
+    if(!line1 || line1.length > 35 || ![self isValidString:line1]) {
         return NO;
     }
     
-    if(line2 && (![self isValidName:line2] || line2.length > 35)) {
+    if(line2 && (![self isValidString:line2] || line2.length > 35)) {
         return NO;
     }
     
@@ -470,7 +473,7 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 
 -(BOOL)isValidCityName:(NSString *) city {
     
-    if(!city || ![self isValidName:city] || city.length > 20) {
+    if(!city || ![self isValidString:city] || city.length > 20) {
         return NO;
     }
     
@@ -479,29 +482,21 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 
 -(BOOL)isValidStateName:(NSString *) state {
     
-    if(![self isValidName:state] || state.length > 35) {
+    if(![self isValidString:state] || state.length > 35) {
         return NO;
     }
     
     return YES;
 }
 
-
 -(BOOL)isValidBillingContact:(CNPostalAddress *) address {
-    
-    if(![self isValidPostCode:address.postalCode]) {
-        return NO;
-    }
-    
-    if(![self isValidStreet:address.street]) {
-        return NO;
-    }
-    
-    if(![self isValidCityName:address.city]) {
-        return NO;
-    }
-    
-    if(![self isValidStateName:address.state]) {
+    // using BPA as reference: https://github.com/EurostarDigital/eurostar_bpa/blob/18103af998c74f852bc233c047cf20306e8acf90/app/shared/validators/checkout-form/billing-address.js
+    if(
+       ![self isValidPostCode:address.postalCode] ||
+       ![self isValidStreet:address.street] ||
+       ![self isValidCityName:address.city] ||
+       ![self isValidStateName:address.state]
+    ) {
         return NO;
     }
     

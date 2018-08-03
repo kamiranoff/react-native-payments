@@ -54,12 +54,12 @@ export default class PaymentResponse {
   }
 
   // https://www.w3.org/TR/payment-request/#details-attribute
-  get billingContact(): any {
+  get billingContact(): BillingContact {
     return this._billingContact;
   }
 
   // https://www.w3.org/TR/payment-request/#details-attribute
-  get token(): any {
+  get token(): PaymentDetailsIOS {
     return this._token;
   }
 
