@@ -77,19 +77,95 @@ RCT_EXPORT_METHOD(complete: (NSDictionary *)paymentObject
     NSString * paymentStatus = [paymentObject valueForKey:@"status"];
     
     if ([paymentStatus isEqualToString: @"success"]) {
-        self.completion(PKPaymentAuthorizationStatusSuccess);
+        
+        [self handlePaymentSuccessful];
+        
     } else {
-        NSArray * errors = [paymentObject objectForKey:@"errors"];
-        for (id error in errors) {
-            if ([[error valueForKey:@"error"] isEqual: @"billingContactInvalid"]) {
-                self.completion(PKPaymentAuthorizationStatusInvalidBillingPostalAddress);
-            } else {
-                self.completion(PKPaymentAuthorizationStatusFailure);
-            }
-        }
+        
+        [self handlePaymentErrors:paymentObject];
         
     }
     callback(@[[NSNull null]]);
+}
+
+-(void) handlePaymentSuccessful {
+    if (@available(iOS 11.0, *)) {
+        PKPaymentAuthorizationResult *result = [[PKPaymentAuthorizationResult alloc]
+                                                initWithStatus:PKPaymentAuthorizationStatusSuccess
+                                                errors:nil];
+        self.completionResult(result);
+    } else {
+        self.completionStatus(PKPaymentAuthorizationStatusSuccess);
+    }
+}
+
+- (void) handlePaymentErrors:(NSDictionary *) paymentObject {
+    if (@available(iOS 11.0, *)) {
+        [self handlePaymentErrorsIOS11:paymentObject];
+    } else {
+        // Fallback on earlier versions
+        [self handlePaymentErrorsIOS10:paymentObject];
+    }
+}
+
+-(void) handlePaymentErrorsIOS10:(NSDictionary *) paymentObject {
+    BOOL hasBillingError = false;
+    NSArray * errors = [paymentObject objectForKey:@"errors"];
+    for (id error in errors) {
+        if ([[error valueForKey:@"error"] isEqual: @"billingContactInvalid"]) {
+            hasBillingError = true;
+        }
+    }
+    
+    if(hasBillingError) {
+        self.completionStatus(PKPaymentAuthorizationStatusInvalidBillingPostalAddress);
+    } else {
+        self.completionStatus(PKPaymentAuthorizationStatusFailure);
+    }
+
+}
+
+-(void) handlePaymentErrorsIOS11:(NSDictionary *) paymentObject API_AVAILABLE(ios(11.0)){
+        NSError * billingInvalidZip = nil;
+        NSError * billingInvalidCity = nil;
+        NSError * billingInvalidStreet = nil;
+        NSError * billingInvalidState = nil;
+        NSArray * errors = [paymentObject objectForKey:@"errors"];
+        NSMutableArray *errorsArray = [[NSMutableArray alloc] init];
+        
+        for (id error in errors) {
+            if ([[error valueForKey:@"error"] isEqual: @"billingContactInvalid"]) {
+                
+                if([[error valueForKey:@"field"] isEqual: @"locality"]) {
+                    billingInvalidCity = [PKPaymentRequest paymentBillingAddressInvalidErrorWithKey:CNPostalAddressCityKey
+                                                                               localizedDescription:[error valueForKey:@"message"]];
+                    [errorsArray addObject:billingInvalidCity];
+                }
+                
+                if([[error valueForKey:@"field"] isEqual: @"administrativeArea"]) {
+                    billingInvalidState = [PKPaymentRequest paymentBillingAddressInvalidErrorWithKey:CNPostalAddressStateKey
+                                                                                localizedDescription:[error valueForKey:@"message"]];
+                    [errorsArray addObject:billingInvalidState];
+                }
+                
+                if([[error valueForKey:@"field"] isEqual: @"postalCode"]) {
+                    billingInvalidZip = [PKPaymentRequest paymentBillingAddressInvalidErrorWithKey:CNPostalAddressPostalCodeKey
+                                                                              localizedDescription:[error valueForKey:@"message"]];
+                    [errorsArray addObject:billingInvalidZip];
+                }
+                
+                if([[error valueForKey:@"field"] isEqual: @"postalCode"]) {
+                    billingInvalidStreet = [PKPaymentRequest paymentBillingAddressInvalidErrorWithKey:CNPostalAddressStreetKey
+                                                                                 localizedDescription:[error valueForKey:@"message"]];
+                    [errorsArray addObject:billingInvalidStreet];
+                }
+            }
+        }
+        
+        PKPaymentAuthorizationResult *result = [[PKPaymentAuthorizationResult alloc]
+                                                initWithStatus:PKPaymentAuthorizationStatusFailure
+                                                errors:errorsArray];
+        self.completionResult(result);
 }
 
 
@@ -157,7 +233,7 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
                                  completion:(void (^)(PKPaymentAuthorizationStatus))completion
 {
     // Store completion for later use
-    self.completion = completion;
+    self.completionStatus = completion;
     
     if (self.hasGatewayParameters) {
         [self.gatewayManager createTokenWithPayment:payment completion:^(NSString * _Nullable token, NSError * _Nullable error) {
@@ -173,6 +249,27 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
     }
 }
 
+
+
+-(void) paymentAuthorizationViewController:(PKPaymentAuthorizationViewController *)controller
+                       didAuthorizePayment:(PKPayment *)payment
+                                   handler:(void (^)(PKPaymentAuthorizationResult * _Nonnull))completion API_AVAILABLE(ios(11.0)){
+    // Store completion for later use
+    self.completionResult = completion;
+    
+    if (self.hasGatewayParameters) {
+        [self.gatewayManager createTokenWithPayment:payment completion:^(NSString * _Nullable token, NSError * _Nullable error) {
+            if (error) {
+                [self handleGatewayError:error];
+                return;
+            }
+            
+            [self handleUserAccept:payment paymentToken:token];
+        }];
+    } else {
+        [self handleUserAccept:payment paymentToken:nil];
+    }
+}
 
 // Shipping Contact
 - (void) paymentAuthorizationViewController:(PKPaymentAuthorizationViewController *)controller
@@ -496,7 +593,7 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
        ![self isValidStreet:address.street] ||
        ![self isValidCityName:address.city] ||
        ![self isValidStateName:address.state]
-    ) {
+       ) {
         return NO;
     }
     
@@ -508,9 +605,9 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 {
     NSString *transactionId = payment.token.transactionIdentifier;
     
-//    if(![self isValidBillingContact:payment.billingContact.postalAddress]) {
-//        return self.completion(PKPaymentAuthorizationStatusInvalidBillingPostalAddress);
-//    }
+    //    if(![self isValidBillingContact:payment.billingContact.postalAddress]) {
+    //        return self.completion(PKPaymentAuthorizationStatusInvalidBillingPostalAddress);
+    //    }
     
     NSString *billingContact = [self getBillingContact:payment.billingContact];
     NSString *paymentMethod = [self getPaymentMethod:payment.token.paymentMethod];

@@ -89,7 +89,7 @@ export default class PaymentResponse {
   }
 
   // https://www.w3.org/TR/payment-request/#complete-method
-  complete(paymentStatus: PaymentComplete) {
+  complete(paymentResponse) {
     if (this._completeCalled === true) {
       throw new Error('InvalidStateError');
     }
@@ -97,7 +97,7 @@ export default class PaymentResponse {
     this._completeCalled = true;
 
     return new Promise((resolve, reject) => {
-      return NativePayments.complete(paymentStatus, () => {
+      return NativePayments.complete(paymentResponse, () => {
         return resolve(undefined);
       });
     });

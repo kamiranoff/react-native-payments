@@ -18,7 +18,8 @@
 @property (nonatomic, strong) GatewayManager *gatewayManager;
 @property BOOL *hasGatewayParameters;
 @property (nonatomic, strong) PKPaymentAuthorizationViewController *viewController;
-@property (nonatomic, copy) void (^completion)(PKPaymentAuthorizationStatus);
+@property (nonatomic, copy) void (^completionStatus)(PKPaymentAuthorizationStatus);
+@property (nonatomic, copy) void (^completionResult)(PKPaymentAuthorizationResult *) API_AVAILABLE(ios(11.0));
 @property (nonatomic, copy) void (^shippingContactCompletion)(PKPaymentAuthorizationStatus, NSArray<PKShippingMethod *> * _Nonnull, NSArray<PKPaymentSummaryItem *> * _Nonnull);
 @property (nonatomic, copy) void (^shippingMethodCompletion)(PKPaymentAuthorizationStatus, NSArray<PKPaymentSummaryItem *> * _Nonnull);
 
