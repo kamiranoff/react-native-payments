@@ -2,8 +2,12 @@
 #import <React/RCTUtils.h>
 #import <React/RCTEventDispatcher.h>
 
-@implementation ReactNativePayments
+@implementation ReactNativePayments {
+    bool hasAuthorizedPayment;
+}
+
 @synthesize bridge = _bridge;
+
 
 - (dispatch_queue_t)methodQueue
 {
@@ -27,6 +31,8 @@ RCT_EXPORT_METHOD(createPaymentRequest: (NSDictionary *)methodData
 {
     NSString *merchantId = methodData[@"merchantIdentifier"];
     NSDictionary *gatewayParameters = methodData[@"paymentMethodTokenizationParameters"][@"parameters"];
+    
+    hasAuthorizedPayment = false;
     
     if (gatewayParameters) {
         self.hasGatewayParameters = true;
@@ -122,57 +128,60 @@ RCT_EXPORT_METHOD(complete: (NSDictionary *)paymentObject
     } else {
         self.completionStatus(PKPaymentAuthorizationStatusFailure);
     }
-
+    
 }
 
--(void) handlePaymentErrorsIOS11:(NSDictionary *) paymentObject API_AVAILABLE(ios(11.0)){
-        NSError * billingInvalidZip = nil;
-        NSError * billingInvalidCity = nil;
-        NSError * billingInvalidStreet = nil;
-        NSError * billingInvalidState = nil;
-        NSArray * errors = [paymentObject objectForKey:@"errors"];
-        NSMutableArray *errorsArray = [[NSMutableArray alloc] init];
-        
-        for (id error in errors) {
-            if ([[error valueForKey:@"error"] isEqual: @"billingContactInvalid"]) {
-                
-                if([[error valueForKey:@"field"] isEqual: @"locality"]) {
-                    billingInvalidCity = [PKPaymentRequest paymentBillingAddressInvalidErrorWithKey:CNPostalAddressCityKey
-                                                                               localizedDescription:[error valueForKey:@"message"]];
-                    [errorsArray addObject:billingInvalidCity];
-                }
-                
-                if([[error valueForKey:@"field"] isEqual: @"administrativeArea"]) {
-                    billingInvalidState = [PKPaymentRequest paymentBillingAddressInvalidErrorWithKey:CNPostalAddressStateKey
-                                                                                localizedDescription:[error valueForKey:@"message"]];
-                    [errorsArray addObject:billingInvalidState];
-                }
-                
-                if([[error valueForKey:@"field"] isEqual: @"postalCode"]) {
-                    billingInvalidZip = [PKPaymentRequest paymentBillingAddressInvalidErrorWithKey:CNPostalAddressPostalCodeKey
-                                                                              localizedDescription:[error valueForKey:@"message"]];
-                    [errorsArray addObject:billingInvalidZip];
-                }
-                
-                if([[error valueForKey:@"field"] isEqual: @"postalCode"]) {
-                    billingInvalidStreet = [PKPaymentRequest paymentBillingAddressInvalidErrorWithKey:CNPostalAddressStreetKey
-                                                                                 localizedDescription:[error valueForKey:@"message"]];
-                    [errorsArray addObject:billingInvalidStreet];
-                }
+-(void) handlePaymentErrorsIOS11:(NSDictionary *) paymentObject API_AVAILABLE(ios(11.0))
+{
+    NSError * billingInvalidZip = nil;
+    NSError * billingInvalidCity = nil;
+    NSError * billingInvalidStreet = nil;
+    NSError * billingInvalidState = nil;
+    NSArray * errors = [paymentObject objectForKey:@"errors"];
+    NSMutableArray *errorsArray = [[NSMutableArray alloc] init];
+    
+    for (id error in errors) {
+        if ([[error valueForKey:@"error"] isEqual: @"billingContactInvalid"]) {
+            
+            if([[error valueForKey:@"field"] isEqual: @"locality"]) {
+                billingInvalidCity = [PKPaymentRequest paymentBillingAddressInvalidErrorWithKey:CNPostalAddressCityKey
+                                                                           localizedDescription:[error valueForKey:@"message"]];
+                [errorsArray addObject:billingInvalidCity];
+            }
+            
+            if([[error valueForKey:@"field"] isEqual: @"administrativeArea"]) {
+                billingInvalidState = [PKPaymentRequest paymentBillingAddressInvalidErrorWithKey:CNPostalAddressStateKey
+                                                                            localizedDescription:[error valueForKey:@"message"]];
+                [errorsArray addObject:billingInvalidState];
+            }
+            
+            if([[error valueForKey:@"field"] isEqual: @"postalCode"]) {
+                billingInvalidZip = [PKPaymentRequest paymentBillingAddressInvalidErrorWithKey:CNPostalAddressPostalCodeKey
+                                                                          localizedDescription:[error valueForKey:@"message"]];
+                [errorsArray addObject:billingInvalidZip];
+            }
+            
+            if([[error valueForKey:@"field"] isEqual: @"postalCode"]) {
+                billingInvalidStreet = [PKPaymentRequest paymentBillingAddressInvalidErrorWithKey:CNPostalAddressStreetKey
+                                                                             localizedDescription:[error valueForKey:@"message"]];
+                [errorsArray addObject:billingInvalidStreet];
             }
         }
-        
-        PKPaymentAuthorizationResult *result = [[PKPaymentAuthorizationResult alloc]
-                                                initWithStatus:PKPaymentAuthorizationStatusFailure
-                                                errors:errorsArray];
-        self.completionResult(result);
+    }
+    
+    PKPaymentAuthorizationResult *result = [[PKPaymentAuthorizationResult alloc]
+                                            initWithStatus:PKPaymentAuthorizationStatusFailure
+                                            errors:errorsArray];
+    self.completionResult(result);
 }
 
 
 -(void) paymentAuthorizationViewControllerDidFinish:(PKPaymentAuthorizationViewController *)controller
 {
     [controller dismissViewControllerAnimated:YES completion:nil];
-    [self.bridge.eventDispatcher sendDeviceEventWithName:@"NativePayments:onuserdismiss" body:nil];
+    if(!hasAuthorizedPayment) {
+        [self.bridge.eventDispatcher sendDeviceEventWithName:@"NativePayments:onuserdismiss" body:nil];
+    }
 }
 
 RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
@@ -234,6 +243,7 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 {
     // Store completion for later use
     self.completionStatus = completion;
+    hasAuthorizedPayment = true;
     
     if (self.hasGatewayParameters) {
         [self.gatewayManager createTokenWithPayment:payment completion:^(NSString * _Nullable token, NSError * _Nullable error) {
@@ -253,9 +263,11 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 
 -(void) paymentAuthorizationViewController:(PKPaymentAuthorizationViewController *)controller
                        didAuthorizePayment:(PKPayment *)payment
-                                   handler:(void (^)(PKPaymentAuthorizationResult * _Nonnull))completion API_AVAILABLE(ios(11.0)){
+                                   handler:(void (^)(PKPaymentAuthorizationResult * _Nonnull))completion API_AVAILABLE(ios(11.0))
+{
     // Store completion for later use
     self.completionResult = completion;
+    hasAuthorizedPayment = true;
     
     if (self.hasGatewayParameters) {
         [self.gatewayManager createTokenWithPayment:payment completion:^(NSString * _Nullable token, NSError * _Nullable error) {
