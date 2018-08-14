@@ -178,10 +178,12 @@ RCT_EXPORT_METHOD(complete: (NSDictionary *)paymentObject
 
 -(void) paymentAuthorizationViewControllerDidFinish:(PKPaymentAuthorizationViewController *)controller
 {
-    [controller dismissViewControllerAnimated:YES completion:nil];
-    if(!hasAuthorizedPayment) {
-        [self.bridge.eventDispatcher sendDeviceEventWithName:@"NativePayments:onuserdismiss" body:nil];
-    }
+   if(!hasAuthorizedPayment) {
+       [controller dismissViewControllerAnimated:YES completion:nil];
+       [self.bridge.eventDispatcher sendDeviceEventWithName:@"NativePayments:onuserdismiss" body:nil];
+   } else {
+       [controller dismissViewControllerAnimated:NO completion:nil];
+   }
 }
 
 RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
